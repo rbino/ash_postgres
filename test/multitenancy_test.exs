@@ -1,7 +1,7 @@
 defmodule AshPostgres.Test.MultitenancyTest do
   use AshPostgres.RepoCase, async: false
 
-  alias AshPostgres.MultitenancyTest.{Api, Org, Post, User}
+  alias AshPostgres.MultitenancyTest.{Api, Org, Picture, Post, Thing, User}
 
   setup do
     org1 =
@@ -19,6 +19,48 @@ defmodule AshPostgres.Test.MultitenancyTest do
 
   defp tenant(org) do
     "org_#{org.id}"
+  end
+
+  test "relationships referencing primary key are isolated when using attribute strategy", %{
+    org1: org1,
+    org2: org2
+  } do
+    user =
+      User
+      |> Ash.Changeset.new(%{name: "a"})
+      |> Ash.Changeset.set_tenant(tenant(org1))
+      |> Api.create!()
+
+    # TODO not sure about what would be raised here
+    assert_raise Ash.Error.Invalid,
+                 ~r/Invalid value provided for user_id: does not exist/,
+                 fn ->
+                   Thing
+                   |> Ash.Changeset.new(%{name: "b"})
+                   |> Ash.Changeset.set_tenant(tenant(org2))
+                   |> Ash.Changeset.manage_relationship(:user, user, type: :append_and_remove)
+                   |> Api.create!()
+                 end
+  end
+
+  test "relationships referencing non-primary key attributes are isolated when using attribute strategy",
+       %{org1: org1, org2: org2} do
+    thing =
+      Thing
+      |> Ash.Changeset.new(%{name: "a"})
+      |> Ash.Changeset.set_tenant(tenant(org1))
+      |> Api.create!()
+      |> IO.inspect()
+
+    assert_raise Ash.Error.Invalid,
+                 ~r/Invalid value provided for thing_name: does not exist/,
+                 fn ->
+                   Picture
+                   |> Ash.Changeset.new(%{name: "b"})
+                   |> Ash.Changeset.set_tenant(tenant(org2))
+                   |> Ash.Changeset.manage_relationship(:thing, thing, type: :append_and_remove)
+                   |> Api.create!()
+                 end
   end
 
   test "listing tenants", %{org1: org1, org2: org2} do
