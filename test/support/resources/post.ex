@@ -126,6 +126,14 @@ defmodule AshPostgres.Test.Post do
       primary?(true)
     end
 
+    read :keyset do
+      pagination do
+        keyset?(true)
+        countable(true)
+        required?(false)
+      end
+    end
+
     read(:allow_any)
 
     read :paginated do

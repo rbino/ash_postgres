@@ -779,7 +779,8 @@ defmodule AshPostgres.DataLayer do
     case lateral_join_query(
            query,
            root_data,
-           path
+           path,
+           true
          ) do
       {:ok, lateral_join_query} ->
         source_resource =
@@ -945,10 +946,14 @@ defmodule AshPostgres.DataLayer do
     end)
   end
 
+  defp lateral_join_query(query, root_data, path, aggregate? \\ false)
+  # TODO: don't select_merge __lateral_join_source__ if aggregate? == true
+
   defp lateral_join_query(
          query,
          root_data,
-         [{source_query, source_attribute, destination_attribute, relationship}]
+         [{source_query, source_attribute, destination_attribute, relationship}],
+         aggregate?
        ) do
     source_query = Ash.Query.new(source_query)
 
@@ -1044,7 +1049,8 @@ defmodule AshPostgres.DataLayer do
            {source_query, source_attribute, source_attribute_on_join_resource, relationship},
            {through_resource, destination_attribute_on_join_resource, destination_attribute,
             through_relationship}
-         ]
+         ],
+         aggregate?
        ) do
     source_query = Ash.Query.new(source_query)
     source_values = Enum.map(root_data, &Map.get(&1, source_attribute))
