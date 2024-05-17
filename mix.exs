@@ -162,7 +162,8 @@ defmodule AshPostgres.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, ash_version("~> 3.0")},
+      {:ash,
+       github: "rbino/ash", branch: "relationship-pagination-count-ecto-debug", override: true},
       {:ash_sql, ash_sql_version("~> 0.1")},
       {:ecto_sql, "~> 3.9"},
       {:ecto, "~> 3.9"},
